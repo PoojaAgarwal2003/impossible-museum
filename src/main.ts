@@ -5,12 +5,8 @@ import type { Quality } from './renderer.ts';
 import { MuseumAudio } from './audio.ts';
 import { constrain, crossing, DOOR_X, EXHIBITS, recursionLabel, ROOMS, walkingDelta } from './navigation.ts';
 import type { ExhibitId, Position, RoomId } from './navigation.ts';
-
-function element<T extends HTMLElement>(id: string): T {
-  const found = document.getElementById(id);
-  if (!found) throw new Error(`Missing museum interface element: ${id}`);
-  return found as T;
-}
+import { element } from './dom.ts';
+import { EscapeController } from './escape-controller.ts';
 
 const app = element('app');
 const enter = element<HTMLButtonElement>('enter');
@@ -21,6 +17,7 @@ const action = element<HTMLButtonElement>('exhibit-action');
 const audio = new MuseumAudio();
 let toastTimer: ReturnType<typeof setTimeout>;
 let museum: MuseumRenderer;
+let escape: EscapeController | undefined;
 let room: RoomId = 'atrium';
 let position: Position = { x: 0, z: 8.5 };
 let yaw = 0;
@@ -47,6 +44,7 @@ const axis = new THREE.Vector3(0, 0, 1);
 const doorFlip = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI);
 const center = new THREE.Vector3(0, 9, 0);
 const delay = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
+const modalOpen = () => guide.open || Boolean(escape?.modalOpen);
 
 function notify(message: string): void {
   toast.textContent = message;
@@ -100,6 +98,7 @@ function updateExhibit(): void {
   element('map-bearing').textContent = room === 'gravity' ? `${Math.round(gravityTarget * 180 / Math.PI) % 360}° ↓` : 'N ↑';
   element('discovered').textContent = `${visited.size} / 3 DISCOVERED`;
   action.hidden = room === 'atrium';
+  action.querySelector('kbd')!.textContent = escape?.active ? 'Q' : 'E';
   element('action-label').textContent = room === 'unfolded' ? unfolded ? 'Fold the hall' : 'Unfold the hall' : room === 'gravity' ? 'Shift gravity' : 'Enter the miniature';
   element('mechanic-status').textContent = room === 'atrium'
     ? depth > 0 ? 'THE MODEL IS NOW YOUR ENTIRE WORLD. R RETURNS TO THE SURFACE.' : 'WALK THROUGH A DOORWAY TO BEGIN.'
@@ -186,7 +185,7 @@ function requestTravel(target: RoomId, options: Parameters<typeof travel>[1] = {
 }
 
 function changeReality(): void {
-  if (busy || !entered || guide.open || failed) return;
+  if (busy || !entered || modalOpen() || failed) return;
   if (room === 'unfolded') {
     unfolded = !unfolded;
     updateExhibit();
@@ -236,8 +235,13 @@ function setupInput(): void {
   let dragPointer: number | null = null;
   let lastX = 0;
   let lastY = 0;
+  let downX = 0;
+  let downY = 0;
+  let dragged = false;
   canvas.addEventListener('pointerdown', event => {
-    if (!entered || busy || guide.open || event.button !== 0) return;
+    if (!entered || busy || modalOpen() || event.button !== 0) return;
+    downX = event.clientX; downY = event.clientY;
+    dragged = false;
     canvas.focus({ preventScroll: true });
     if (document.pointerLockElement) return;
     dragPointer = event.pointerId;
@@ -245,22 +249,26 @@ function setupInput(): void {
     canvas.setPointerCapture(event.pointerId);
   });
   canvas.addEventListener('pointermove', event => {
-    if (!entered || busy || guide.open) return;
+    if (!entered || busy || modalOpen()) return;
     const locked = document.pointerLockElement === canvas;
     if (!locked && event.pointerId !== dragPointer) return;
     const dx = locked ? event.movementX : event.clientX - lastX;
     const dy = locked ? event.movementY : event.clientY - lastY;
+    if (Math.hypot(event.clientX - downX, event.clientY - downY) >= 6 || (locked && Math.hypot(dx, dy) >= 6)) dragged = true;
     yaw -= dx * 0.003;
     pitch = THREE.MathUtils.clamp(pitch - dy * 0.003, -1.35, 1.35);
     lastX = event.clientX; lastY = event.clientY;
   });
   const stopDrag = () => { dragPointer = null; };
-  canvas.addEventListener('pointerup', stopDrag);
+  canvas.addEventListener('pointerup', event => {
+    if (!dragged && Math.hypot(event.clientX - downX, event.clientY - downY) < 6) escape?.inspectAt(event.clientX, event.clientY, document.pointerLockElement === canvas);
+    stopDrag();
+  });
   canvas.addEventListener('pointercancel', stopDrag);
   canvas.addEventListener('lostpointercapture', stopDrag);
   document.addEventListener('keydown', event => {
     if (event.target instanceof HTMLElement && (event.target.matches('input, select, textarea') || event.target.isContentEditable)) return;
-    if (guide.open) return;
+    if (modalOpen()) return;
     if (movementKeys.has(event.code) && entered && !busy) {
       keys.add(event.code);
       event.preventDefault();
@@ -268,7 +276,12 @@ function setupInput(): void {
     if (event.repeat) return;
     if (event.code === 'KeyH') openGuide();
     if (event.code === 'KeyF') void fullscreen();
-    if (event.code === 'KeyE') changeReality();
+    if (event.code === 'KeyE') {
+      if (escape?.active) escape.inspectNearest();
+      else changeReality();
+    }
+    if (event.code === 'KeyQ') changeReality();
+    if (event.code === 'KeyJ') escape?.openJournal();
     if (event.code === 'KeyR' && entered) requestTravel('atrium', { surface: true });
   });
   document.addEventListener('keyup', event => keys.delete(event.code));
@@ -288,7 +301,7 @@ function setupInput(): void {
   document.addEventListener('pointerlockerror', () => notify('Mouse locking was not allowed. You can still drag to look around.'));
   document.querySelectorAll<HTMLButtonElement>('[data-move]').forEach(button => {
     button.addEventListener('pointerdown', event => {
-      if (busy || guide.open) return;
+      if (busy || modalOpen()) return;
       event.preventDefault();
       keys.add(button.dataset.move!);
       button.setPointerCapture(event.pointerId);
@@ -302,6 +315,8 @@ function setupInput(): void {
 
 function setupUI(): void {
   enter.addEventListener('click', begin);
+  element('escape-enter').addEventListener('click', () => { begin(); escape?.start(); });
+  element('escape-from-guide').addEventListener('click', () => { guide.close(); begin(); escape?.start(); });
   element('brand').addEventListener('click', event => {
     event.preventDefault();
     if (entered) requestTravel('atrium', { surface: true });
@@ -380,7 +395,7 @@ function animate(timestamp: number): void {
   const dt = lastFrame ? Math.min((timestamp - lastFrame) / 1000, 0.05) : 0;
   lastFrame = timestamp;
   try {
-    if (!paused && !reducedMotion && !guide.open) time += dt;
+    if (!paused && !reducedMotion && !modalOpen()) time += dt;
     gravityAngle = reducedMotion ? gravityTarget : THREE.MathUtils.damp(gravityAngle, gravityTarget, 4.2, dt);
     foldAmount = reducedMotion ? unfolded ? 1.72 : 1 : THREE.MathUtils.damp(foldAmount, unfolded ? 1.72 : 1, 2.2, dt);
     roll.setFromAxisAngle(axis, gravityAngle);
@@ -388,7 +403,7 @@ function animate(timestamp: number): void {
     museum.world.gravityDoor.quaternion.copy(roll).multiply(doorFlip);
     museum.world.foldedArchitecture.scale.z = foldAmount;
     museum.world.animate(time);
-    if (entered && !busy && !guide.open && (room !== 'gravity' || Math.abs(gravityTarget - gravityAngle) < 0.025)) {
+    if (entered && !busy && !modalOpen() && (room !== 'gravity' || Math.abs(gravityTarget - gravityAngle) < 0.025)) {
       if (keys.has('ArrowLeft')) yaw += dt * 1.6;
       if (keys.has('ArrowRight')) yaw -= dt * 1.6;
       const forward = Number(keys.has('KeyW') || keys.has('ArrowUp')) - Number(keys.has('KeyS') || keys.has('ArrowDown'));
@@ -398,9 +413,13 @@ function animate(timestamp: number): void {
       const next = { x: position.x + delta.x, z: position.z + delta.z };
       const target = crossing(room, position, next);
       if (target) requestTravel(target, { portal: true });
-      else position = constrain(room, next);
+      else {
+        const constrained = constrain(room, next);
+        position = escape ? escape.restrictPosition(constrained) : constrained;
+      }
     }
     cameraPose();
+    escape?.tick(dt, time, reducedMotion);
     if (timestamp - hudTime > 120) { updateMap(); hudTime = timestamp; }
     museum.render(room);
   } catch (error) {
@@ -417,6 +436,18 @@ async function boot(): Promise<void> {
     museum.setQuality('low');
     element<HTMLSelectElement>('quality').value = 'low';
   }
+  escape = new EscapeController(museum, {
+    context: () => ({
+      room, position, depth, face: Math.round(gravityTarget / (Math.PI / 2)) % 4, unfolded,
+      settled: (room !== 'gravity' || Math.abs(gravityTarget - gravityAngle) < 0.025)
+        && (room !== 'unfolded' || Math.abs(foldAmount - (unfolded ? 1.72 : 1)) < 0.03),
+    }),
+    ready: () => entered && !busy && !failed && !guide.open,
+    interrupt: () => { keys.clear(); if (document.pointerLockElement) document.exitPointerLock(); },
+    notify,
+    modeChanged: updateExhibit,
+    returnHome: () => requestTravel('atrium', { surface: true }),
+  });
   setupInput();
   setupUI();
   cameraPose();
@@ -427,6 +458,7 @@ async function boot(): Promise<void> {
   updateMap();
   app.classList.replace('loading', 'ready');
   enter.disabled = false;
+  element<HTMLButtonElement>('escape-enter').disabled = false;
   enter.innerHTML = '<span>Enter the museum</span><span aria-hidden="true">↗</span>';
   requestAnimationFrame(animate);
 }

@@ -1,0 +1,149 @@
+.escape-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 300px;
+  padding: 13px 0 0;
+  background: none;
+  color: var(--gold);
+  font-size: 10px;
+  text-align: left;
+}
+.escape-entry span { font-size: 17px; }
+#escape-hud { position: absolute; inset: 0; pointer-events: none; }
+.journal-button {
+  position: absolute;
+  top: 137px;
+  left: 42px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 11px 15px;
+  background: #142d30d9;
+  border: 1px solid #dec39955;
+  border-radius: 3px;
+  backdrop-filter: blur(10px);
+  pointer-events: auto;
+  font-size: 8px;
+  letter-spacing: 1.8px;
+  text-align: left;
+}
+.journal-button small {
+  display: block;
+  margin-top: 6px;
+  color: var(--gold);
+  font-size: 7px;
+  letter-spacing: 1.4px;
+}
+.escape-emblem { font-size: 29px; color: var(--gold); }
+.journal-button kbd { margin-left: 12px; }
+.item-prompt {
+  position: absolute;
+  top: calc(50% + 30px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(90vw, 380px);
+  background: #112c30ed;
+  border: 1px solid #edcb8ba6;
+  border-radius: 3px;
+  box-shadow: 0 8px 40px #071a2340;
+  backdrop-filter: blur(12px);
+  color: var(--cream);
+  padding: 12px 17px;
+  font-size: 11px;
+  pointer-events: auto;
+}
+.item-prompt kbd { color: var(--gold); }
+.item-prompt > span:last-child { color: var(--gold); }
+.escape-controls {
+  position: absolute;
+  right: 42px;
+  top: 181px;
+  font-size: 7px;
+  letter-spacing: 1.2px;
+  color: #cfddcf;
+}
+.escape-invitation { border-top: 1px solid var(--line); padding-top: 18px; margin-top: 21px; }
+.escape-invitation b { font-size: 8px; font-weight: 500; letter-spacing: 1.5px; color: var(--gold); }
+.escape-invitation p { font-size: 11px; color: var(--muted); line-height: 1.8; }
+.escape-invitation .action-button { margin-top: 12px; }
+.inscription {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 21px;
+  white-space: pre-wrap;
+  line-height: 1.55;
+  padding: 23px;
+  border: 1px solid #d9c6a138;
+  background: linear-gradient(135deg, #b69c6620, #0c25292b);
+  color: #ede4cb;
+}
+.inscription.catalogue { font-family: ui-monospace, monospace; font-size: 14px; line-height: 2.1; letter-spacing: 1.1px; }
+#inspection-controls { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; margin-top: 23px; }
+#inspection-controls:empty { display: none; }
+#inspection-controls label { display: flex; flex-direction: column; gap: 8px; font-size: 9px; color: var(--gold); letter-spacing: 1px; }
+#inspection-controls input,
+#inspection-controls select {
+  border: 1px solid #cdb99073;
+  background: #10292d;
+  border-radius: 3px;
+  color: var(--cream);
+  padding: 12px 10px;
+  font: inherit;
+  font-size: 14px;
+  max-width: 150px;
+}
+#inspection-controls .action-button { margin: 0; padding: 13px 16px; min-height: 43px; }
+#inspection-feedback { min-height: 18px; color: #e9bb9a; }
+#inspection-feedback[data-success=true] { color: #b5d8b1; }
+#inspection .inspection-note { font-size: 9px; color: #91afa5; margin-top: 18px; }
+.journal-objective { color: var(--gold) !important; }
+.seal-inventory { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin: 25px 0; }
+.seal-slot { padding: 15px 8px; border: 1px solid var(--line); text-align: center; color: #7f9c95; }
+.seal-slot.recovered { color: var(--gold); background: #b69c6612; border-color: #dec39988; }
+.seal-slot strong { display: block; font: 37px 'Cormorant Garamond', serif; font-weight: 400; line-height: 1; }
+.seal-slot span { display: block; font-size: 8px; letter-spacing: 2px; margin-top: 9px; }
+.journal-clues { border-top: 1px solid var(--line); }
+.journal-clues > p { font-size: 11px; line-height: 1.8; color: var(--muted); }
+.journal-clues details { border-bottom: 1px solid var(--line); padding: 14px 0; }
+.journal-clues summary { cursor: pointer; font-size: 11px; color: #e9ddc5; }
+.journal-clues pre { white-space: pre-wrap; overflow-wrap: anywhere; font: 11px/1.8 'DM Sans Variable', sans-serif; color: #bfcfc3; margin: 15px 0 4px; }
+.hint-box { background: #0e272b8f; padding: 20px; border: 1px solid #d9c6a138; margin-top: 24px; }
+.hint-box > p:not(.eyebrow) { font-size: 11px; line-height: 1.8; color: #c9d3c6; }
+.hint-box .action-button { margin-top: 14px; }
+.quiet-button { background: none; color: #b7c8be; padding: 12px 0; font-size: 10px; text-decoration: underline; text-underline-offset: 5px; }
+#escape-ending { text-align: center; max-width: 530px; padding-block: 45px; }
+.ending-symbol { font-size: 70px; color: var(--gold); margin: 25px 0 0; }
+#escape-ending h2 { font-size: 68px; }
+#escape-ending .primary-button { margin: 30px auto 15px; min-width: 250px; }
+body:has(#inspection[open], #clue-journal[open], #escape-ending[open]) .item-prompt { display: none; }
+@media (max-width: 700px) {
+  .escape-entry { max-width: 280px; font-size: 9px; }
+  .journal-button { left: 22px; top: 121px; padding: 8px 11px; gap: 8px; font-size: 7px; letter-spacing: 1.2px; }
+  .journal-button small { font-size: 6px; margin-top: 4px; }
+  .journal-button kbd { display: none; }
+  .escape-emblem { font-size: 22px; }
+  .escape-controls { display: none; }
+  .item-prompt { top: 37%; font-size: 10px; padding: 10px 13px; min-width: 200px; }
+  .inscription { font-size: 19px; padding: 17px; }
+  .inscription.catalogue { font-size: 11px; letter-spacing: 0; }
+  #inspection-controls { gap: 8px; }
+  #inspection-controls input, #inspection-controls select { font-size: 12px; padding: 11px 7px; max-width: 135px; }
+  #inspection-controls label { font-size: 8px; letter-spacing: 0; }
+  .seal-slot { padding: 12px 5px; }
+  .seal-slot span { font-size: 7px; letter-spacing: 1px; }
+}
+@media (max-height: 800px) and (min-height: 501px) {
+  #intro h1 { font-size: 79px; }
+  #intro .intro-rule { margin-bottom: 10px; }
+  #intro .intro-footnote { margin-top: 14px; }
+}
+@media (max-height: 500px) {
+  #intro .intro-copy { display: none; }
+  .escape-entry { padding-top: 9px; }
+  .journal-button { top: 108px; padding: 7px 10px; }
+  .escape-controls { display: none; }
+  .item-prompt { top: 44%; }
+}

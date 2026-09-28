@@ -38,6 +38,7 @@
         <h1 id="intro-title">Some places<br>shouldn’t<br><em>exist.</em></h1>
         <p class="intro-copy">A doorway bigger on the inside. A garden without a down. A museum inside itself.<br>Leave your certainty at the door.</p>
         <button id="enter" class="primary-button" disabled><span>Preparing the impossible</span><span aria-hidden="true">↗</span></button>
+        <button id="escape-enter" class="escape-entry" disabled>Or take the escape challenge <span aria-hidden="true">↗</span></button>
         <div class="intro-footnote"><span class="tiny-spark">✳</span> THREE EXHIBITS. ABSOLUTELY NO LAWS OF PHYSICS.</div>
       </section>
       <div class="intro-caption" id="intro-caption" aria-hidden="true"><span class="caption-line"></span><p>THE ATRIUM<small>Nothing here is quite what it seems.</small></p></div>
@@ -46,6 +47,11 @@
         <div class="top-location"><span id="room-index">00 / THE ATRIUM</span><span id="depth-label">SCALE 1:1</span></div>
         <button id="look-lock" class="look-button" title="Lock the mouse for first-person looking">⊙ <span>Free look</span></button>
         <span id="crosshair" aria-hidden="true"></span>
+        <div id="escape-hud" hidden>
+          <button id="open-journal" class="journal-button"><span class="escape-emblem" aria-hidden="true">◇</span><span>THE LAST VISITOR<small id="seal-count">0 / 3 SEALS RECOVERED</small></span><kbd>J</kbd></button>
+          <button id="inspect-nearby" class="item-prompt" hidden><kbd>E</kbd><span id="nearby-name"></span><span aria-hidden="true">↗</span></button>
+          <p class="escape-controls">E · INSPECT &nbsp; Q · CHANGE REALITY &nbsp; J · JOURNAL</p>
+        </div>
         <section class="exhibit-info" aria-live="polite" aria-atomic="true">
           <p class="eyebrow" id="room-category">THE SPACE BETWEEN SPACES</p>
           <h2 id="room-title">The Atrium</h2>
@@ -99,18 +105,49 @@
         <div class="guide-controls">
           <span><kbd>W A S D</kbd> Move <small>Arrow keys: walk / turn</small></span>
           <span><kbd>DRAG</kbd> Look around <small>Or enable Free look</small></span>
-          <span><kbd>E</kbd> Change reality <small>Each exhibit has an interaction</small></span>
+          <span><kbd>E / Q</kbd> Change reality <small>Escape: E inspects, Q changes reality</small></span>
           <span><kbd>SHIFT</kbd> Walk faster <small>R returns to the atrium</small></span>
           <span><kbd>ESC</kbd> Release mouse <small>H opens this guide</small></span>
           <span><kbd>F</kbd> Fullscreen <small>Camera saves a postcard</small></span>
         </div>
         <div class="guide-exhibits"><p><b>01 · Space</b> Step through a live portal into a hall that could never fit behind its door. Unfold its architecture.</p><p><b>02 · Gravity</b> Shift your down by a quarter turn. The walls really become your walking surfaces.</p><p><b>03 · Infinity</b> Find a living model of the atrium. Enter it, then find the model again. How far down will you go?</p></div>
+        <div class="escape-invitation"><b>THE LAST VISITOR / ESCAPE CHALLENGE</b><p>Inspectable artifacts, linked ciphers, three seals, and one real way out. No timer. Clues and progress save automatically. J opens your journal; hints are optional.</p><button id="escape-from-guide" class="action-button">Start / resume the challenge ↗</button></div>
         <div class="settings">
           <label>Render quality<select id="quality"><option value="balanced">Balanced</option><option value="high">High</option><option value="low">Low power</option></select></label>
           <label class="check-setting"><input id="reduced-motion" type="checkbox"> Reduced motion</label>
           <label class="check-setting"><input id="pause" type="checkbox"> Pause exhibit animation</label>
         </div>
         <p class="guide-note">Built from light, geometry, and a little misdirection. Spatial illusions, not a physics simulator. No accounts, tracking, or runtime downloads.</p>
+      </dialog>
+
+      <dialog id="inspection" aria-labelledby="inspection-title">
+        <button class="close-button" data-close="inspection" aria-label="Close item inspection">×</button>
+        <p class="eyebrow" id="inspection-location">AN OBJECT WITH SOMETHING TO SAY</p>
+        <h2 id="inspection-title"></h2>
+        <div id="inspection-body" class="inscription"></div>
+        <form id="inspection-controls"></form>
+        <p id="inspection-feedback" class="puzzle-feedback" role="status" aria-live="polite"></p>
+        <p class="inspection-note">Collected inscriptions are kept in your journal. Close this page to move or change reality.</p>
+      </dialog>
+      <dialog id="clue-journal" aria-labelledby="journal-title">
+        <button class="close-button" data-close="clue-journal" aria-label="Close clue journal">×</button>
+        <p class="eyebrow">THE LAST VISITOR / FIELD NOTES</p>
+        <h2 id="journal-title">A way out, in pieces.</h2>
+        <p id="escape-objective" class="journal-objective"></p>
+        <div id="escape-inventory" class="seal-inventory"></div>
+        <div id="journal-clues" class="journal-clues"></div>
+        <section class="hint-box" aria-label="Optional progressive hints"><p class="eyebrow">ONLY IF YOU WANT A NUDGE</p><p id="hint-text">The museum will not give away its secrets unless you ask.</p><button id="reveal-hint" class="action-button">Reveal a small hint</button></section>
+        <p id="journal-stats" class="guide-note"></p>
+        <button id="leave-challenge" class="quiet-button">Return to free exploration · keep progress</button>
+      </dialog>
+      <dialog id="escape-ending" aria-labelledby="ending-title">
+        <p class="eyebrow">DEPARTURE ACKNOWLEDGED</p>
+        <div class="ending-symbol" aria-hidden="true">◇</div>
+        <h2 id="ending-title">You found<br>the outside.</h2>
+        <p>The museum keeps its contradictions. You get to keep the way out.</p>
+        <p id="ending-stats"></p>
+        <button id="ending-explore" class="primary-button">Keep exploring <span aria-hidden="true">↗</span></button>
+        <button id="ending-restart" class="quiet-button">Begin a fresh escape challenge</button>
       </dialog>
     </main>
     <script type="module" src="/src/main.ts"></script>

@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { ParametricGeometry } from 'three/addons/geometries/ParametricGeometry.js';
 import { DOOR_X, EXHIBITS, ROOMS } from './navigation.ts';
 import type { RoomId } from './navigation.ts';
+import { ARTIFACTS } from './escape.ts';
+import type { Artifact } from './escape.ts';
 
 export interface Portal {
   room: RoomId;
@@ -23,7 +25,15 @@ export interface MuseumWorld {
   miniatureVisitor: THREE.Object3D;
   liveBuffer: THREE.WebGLRenderTarget;
   liveCamera: THREE.PerspectiveCamera;
+  escape: EscapeCollection;
   animate: (time: number) => void;
+}
+
+export interface EscapeCollection {
+  groups: THREE.Group[];
+  props: { artifact: Artifact; object: THREE.Group; marker: THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshStandardMaterial> }[];
+  exitDoor: THREE.Group;
+  exitLight: THREE.Mesh;
 }
 
 const unitBox = new THREE.BoxGeometry();
@@ -195,17 +205,23 @@ function scene(background: number, fogFar: number): THREE.Scene {
   return result;
 }
 
-function makePortal(parent: THREE.Object3D, room: RoomId, target: RoomId, x: number, z: number, reverse = false): Portal {
-  const root = new THREE.Group();
-  root.position.set(x, 0, z);
-  root.rotation.y = reverse ? Math.PI : 0;
-  const width = 3.8; const height = 6.8; const radius = width / 2;
+function doorwayShape(width: number, height: number): THREE.Shape {
+  const radius = width / 2;
   const shape = new THREE.Shape();
   shape.moveTo(-radius, 0);
   shape.lineTo(radius, 0);
   shape.lineTo(radius, height - radius);
   shape.absarc(0, height - radius, radius, 0, Math.PI, false);
   shape.closePath();
+  return shape;
+}
+
+function makePortal(parent: THREE.Object3D, room: RoomId, target: RoomId, x: number, z: number, reverse = false): Portal {
+  const root = new THREE.Group();
+  root.position.set(x, 0, z);
+  root.rotation.y = reverse ? Math.PI : 0;
+  const width = 3.8; const height = 6.8; const radius = width / 2;
+  const shape = doorwayShape(width, height);
   const buffer = new THREE.WebGLRenderTarget(640, 360, { depthBuffer: true });
   const material = new THREE.ShaderMaterial({
     uniforms: { view: { value: buffer.texture } },
@@ -448,6 +464,71 @@ function buildRecursive(room: THREE.Scene, atrium: THREE.Group, centerpiece: THR
   return { miniatureSculpture, liveBuffer, liveCamera, model };
 }
 
+function createEscapeCollection(scenes: Record<RoomId, THREE.Scene>): EscapeCollection {
+  const groups = Object.fromEntries(Object.keys(scenes).map(id => {
+    const group = new THREE.Group();
+    group.visible = false;
+    scenes[id as RoomId].add(group);
+    return [id, group];
+  })) as Record<RoomId, THREE.Group>;
+  const props: EscapeCollection['props'] = [];
+  for (const artifact of ARTIFACTS) {
+    const object = new THREE.Group();
+    object.position.set(artifact.x, 0, artifact.z);
+    if (artifact.face !== undefined) {
+      object.position.y -= 9;
+      object.rotation.z = artifact.face * Math.PI / 2;
+      object.position.applyAxisAngle(new THREE.Vector3(0, 0, 1), object.rotation.z);
+      object.position.y += 9;
+    }
+    object.userData.artifactId = artifact.id;
+    cylinder(object, 0.43, 0.88, [0, 0.44, 0], palette.dark);
+    cylinder(object, 0.49, 0.055, [0, 0.91, 0], palette.brass);
+    if (artifact.kind === 'book') {
+      for (const side of [-1, 1]) {
+        const page = box(object, [0.37, 0.055, 0.51], [side * 0.18, 1, 0], palette.pale);
+        page.rotation.z = side * 0.14;
+        for (let line = 0; line < 4; line++) box(object, [0.24, 0.006, 0.008], [side * 0.18, 1.04, -0.13 + line * 0.07], palette.brass);
+      }
+    } else {
+      const tablet = box(object, [1.1, 0.68, 0.1], [0, 1.27, 0], artifact.kind === 'lock' ? palette.brass : palette.dark);
+      tablet.rotation.x = -0.12;
+      if (artifact.kind === 'lock') {
+        for (let i = -1; i <= 1; i++) ring(object, 0.085, 0.022, [i * 0.24, 1.25, 0.08], palette.dark);
+      } else {
+        label(object, artifact.kind === 'plate' ? artifact.id.toUpperCase() : 'CATALOGUE', [0, 1.36, 0.08], 0.95, '#ead5ad');
+      }
+    }
+    const marker = new THREE.Mesh(new THREE.IcosahedronGeometry(0.11, 0), glow(0xf0c788, 0.65));
+    marker.position.y = 2;
+    object.add(marker);
+    ring(object, 0.22, 0.009, [0, 2, 0], palette.brass);
+    groups[artifact.room].add(object);
+    props.push({ artifact, object, marker });
+  }
+  const doorway = new THREE.Group();
+  doorway.position.set(0, 0, 13.1);
+  doorway.rotation.y = Math.PI;
+  arch(doorway, 3.4, 6.3, [0, 0, 0], palette.pale, 0.45);
+  label(doorway, 'THE WAY OUT', [0, 7.1, 0.1], 4, '#e1c598');
+  const exitDoor = new THREE.Group();
+  exitDoor.position.x = -1.7;
+  const leaf = new THREE.Mesh(new THREE.ExtrudeGeometry(doorwayShape(3.4, 6.3), { depth: 0.16, bevelEnabled: false }), palette.dark);
+  leaf.position.set(1.7, 0, -0.08);
+  leaf.castShadow = true;
+  leaf.receiveShadow = true;
+  exitDoor.add(leaf);
+  for (const x of [0.12, 3.28]) box(exitDoor, [0.026, 4.55, 0.025], [x, 2.3, 0.1], palette.brass);
+  cylinder(exitDoor, 0.05, 0.4, [2.9, 1.65, 0.16], palette.brass);
+  doorway.add(exitDoor);
+  const exitLight = new THREE.Mesh(new THREE.ShapeGeometry(doorwayShape(3.35, 6.26), 48), glow(0xffecc3, 2.3));
+  exitLight.position.z = -0.11;
+  doorway.add(exitLight);
+  exitLight.visible = false;
+  groups.atrium.add(doorway);
+  return { groups: Object.values(groups), props, exitDoor, exitLight };
+}
+
 export function createWorld(): MuseumWorld {
   const scenes: Record<RoomId, THREE.Scene> = {
     atrium: scene(0x91aaa8, 90),
@@ -466,6 +547,7 @@ export function createWorld(): MuseumWorld {
   const unfolded = buildUnfolded(scenes.unfolded);
   const halo = buildGravity(scenes.gravity);
   const recursive = buildRecursive(scenes.recursive, architecture, sculpture);
+  const escape = createEscapeCollection(scenes);
   const visitor = new THREE.Group();
   const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.19, 0.9, 5, 10), glow(0xe9c783, 0.25));
   body.position.y = 0.85;
@@ -492,7 +574,7 @@ export function createWorld(): MuseumWorld {
     scenes, portals, gravityDoor: portals.find(portal => portal.room === 'gravity')!.root,
     foldedArchitecture: unfolded.fold, centerpiece: sculpture,
     miniatureSculpture: recursive.miniatureSculpture, visitor, miniatureVisitor,
-    liveBuffer: recursive.liveBuffer, liveCamera: recursive.liveCamera,
+    liveBuffer: recursive.liveBuffer, liveCamera: recursive.liveCamera, escape,
     animate(time) {
       sculpture.rotation.set(Math.sin(time * 0.13) * 0.12, time * 0.15, Math.cos(time * 0.18) * 0.08);
       sculpture.position.y = 3.1 + Math.sin(time * 0.8) * 0.12;

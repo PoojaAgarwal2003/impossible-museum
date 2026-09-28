@@ -34,6 +34,32 @@ npm run dev
 
 This is a designed spatial illusion, not a general-purpose physics or recursive-ray-tracing engine. Portals map the camera between separate scenes. The miniature reuses the atrium at a new narrative scale rather than allocating an unbounded number of nested worlds. Walking collisions cover room boundaries and major exhibits; decorative details are not a full physics mesh.
 
+## The Last Visitor / escape challenge
+
+Choose **Or take the escape challenge** on the arrival screen, or start/resume it from the visitor guide. Normal **Enter the museum** still opens unrestricted exploration. The challenge adds twelve physical artifacts, three linked puzzles, seal inventory, a clue journal, and a hinged departure door.
+
+Look for **floating brass diamonds**. Approach an artifact and press **E**, click the object, or tap its nearby-item prompt. **Q** changes reality in escape mode; **J** opens the journal. Close an inspection before walking or changing a room. Pedestals and the locked door have walking collision.
+
+The surveyor, gardener, and archivist each have a different kind of clue. Solving requires comparing the actual folded/unfolded catalogues, visiting different gravity surfaces, and collecting evidence at specific recursion depths. Guessing a final answer cannot bypass missing evidence or prerequisite seals.
+
+Your journal records inscriptions verbatim, shows the current objective and recovered seals, and offers **three optional hint levels per step**. The last level is explicitly marked as a solution hint. There is no timer or death state. Wrong answers are explained; a wrong gravity press resets only its sequence, never the clues or seals.
+
+Clues, seals, hint usage, and partial witness sequences save separately from exploration discoveries. **R** returns to the original atrium without erasing puzzle progress. Reloading starts you at the atrium; choose **Resume** to keep the challenge. You can suspend the challenge from the journal and continue free exploration. Storage failures are reported, with the current visit remaining playable.
+
+Recovering all three seals is not the ending: decode the departure inscription in the **original** atrium, unlock the door, and **physically walk through it**. The ending offers continued exploration or an explicitly fresh challenge.
+
+<details>
+<summary>Developer walkthrough / spoilers</summary>
+
+1. Read the curator's notebook in the atrium.
+2. Inspect the shifting catalogue in both hall states. The unchanged shelves are I, V, and VIII: **EYE / KEY / MOON**. Enter them at the invariant cabinet to recover SPACE, numbered **4**.
+3. Read the gardener's note and inspect all four gravity witnesses. Press **ROOT (ceiling), BRANCH (right wall), FLOWER (left wall), SEED (floor)**. Turning past a surface is harmless; only presses affect the chain. Recover GRAVITY, numbered **7**.
+4. Inspect the echo registry at depths **1 and 2**. In shelf order II, V, VIII, LATE → LAKE, SAND → SEND, and TELL → YELL give **KEY**. Return to depth 0 and certify that word at the registry to recover INFINITY, numbered **2**.
+5. At the original atrium's departure lock, order the seals as INFINITY, SPACE, GRAVITY: **247**.
+6. Walk through the illuminated door opposite the exhibit portals. Neither entering a code nor visiting a copied exit completes the challenge.
+
+</details>
+
 ## Controls
 
 | Input | Action |
@@ -44,6 +70,7 @@ This is a designed spatial illusion, not a general-purpose physics or recursive-
 | Arrow up / down; left / right | Walk forward / backward; turn |
 | Shift | Walk faster |
 | E / exhibit action button | Unfold space, shift gravity, or enter the miniature |
+| E / Q / J in escape mode | Inspect a nearby object / change reality / open the clue journal |
 | R / Atrium button | Return to the original atrium, resetting recursion depth |
 | Exhibit cards | Travel directly to a room |
 | H / ? | Visitor guide and rendering settings |
@@ -72,6 +99,8 @@ For browser checks, start the development server first, then:
 npm run test:browser
 ```
 
+`npm run test:browser` runs both the original exploration checks and a full escape playthrough. `npm run test:escape` runs only the escape checks, including wrong answers, observation requirements, a mid-sequence reload, both recursion depths, the physical exit, ray-cast item clicking, and real touch input.
+
 Browser checks use Microsoft Edge on Windows by default, or Playwright Chromium elsewhere. Set `BROWSER_CHANNEL=chromium` to use installed Playwright Chromium; install it with `npx playwright install chromium` if needed. Set `MUSEUM_URL` to test another origin, such as the production preview. Screenshots and test artifacts go into the ignored `artifacts` directory.
 
 ## Implementation
@@ -82,5 +111,8 @@ Browser checks use Microsoft Edge on Windows by default, or Playwright Chromium 
 - `src/navigation.ts`: room metadata, movement, collision constraints, doorway crossings, and recursion labels.
 - `src/main.ts`: exploration state, input, accessibility, exhibit mechanics, and UI.
 - `src/audio.ts`: gesture-activated Web Audio ambience.
+- `src/escape.ts`: pure puzzle rules, inscriptions, artifacts, hints, and validated save state.
+- `src/escape-controller.ts`: proximity/ray-cast inspection, journal, inventory, puzzle forms, and the escape sequence.
+- `src/escape.css`: escape-specific interface styling; free exploration remains intact.
 
 No runtime external requests, accounts, analytics, API keys, or downloaded art assets. No remote repository or deployment is configured automatically.

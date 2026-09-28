@@ -7,8 +7,9 @@
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
-    "test": "node --experimental-strip-types --test tests/navigation.test.ts",
-    "test:browser": "node tests/browser.mjs"
+    "test": "node --experimental-strip-types --test tests/navigation.test.ts tests/escape.test.ts",
+    "test:browser": "node tests/browser.mjs && node tests/escape-browser.mjs",
+    "test:escape": "node tests/escape-browser.mjs"
   },
   "dependencies": {
     "@fontsource-variable/dm-sans": "^5.2.0",
