@@ -1,28 +1,51 @@
 # PARADOX / The Impossible Museum
 
-A walkable Three.js museum of spaces that should not exist. An ivory-and-brass atrium leads to three interactive exhibits through live, camera-relative portal views. All geometry, materials, sound, and visual effects are generated locally; fonts are bundled.
+A walkable Three.js museum of spaces that should not exist. Cross live portals into impossible architecture, rotate gravity beneath your feet, descend into a museum containing itself, or solve a connected escape-room mystery.
 
-![PARADOX: an ivory-and-brass museum atrium with live arched portals and an invitation to explore](docs/images/arrival.png)
+<p align="center">
+  <img src="docs/images/arrival.png" alt="PARADOX arrival screen introducing the impossible museum" width="100%">
+</p>
 
-## Start
+<table>
+  <tr>
+    <td width="50%"><img src="docs/images/gravity-garden.png" alt="The Gravity Garden with trees growing from multiple walking surfaces"></td>
+    <td width="50%"><img src="docs/images/museum-within.png" alt="A recursive miniature museum containing a live view of the original atrium"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Shift gravity and walk across four different surfaces</sub></td>
+    <td align="center"><sub>Enter a museum that contains a live miniature of itself</sub></td>
+  </tr>
+</table>
+
+<p align="center">
+  <img src="docs/images/escape-exit.png" alt="The illuminated departure door after completing The Last Visitor escape challenge" width="100%">
+  <br>
+  <sub><strong>The Last Visitor:</strong> collect evidence, solve three linked exhibits, and physically escape through the recovered exit.</sub>
+</p>
+
+## Highlights
+
+- Walk freely through three handcrafted spatial paradoxes connected by real-time portal views.
+- Unfold an interior larger than its entrance, rotate the walking plane, and explore recursive architecture.
+- Play unrestricted museum exploration or the optional **The Last Visitor** escape challenge.
+- Inspect physical clues, maintain a persistent journal, request staged hints, and solve linked room puzzles.
+- Use responsive keyboard, mouse, and touch controls with accessibility and performance settings.
+- Run completely locally with procedural geometry, generated ambience, bundled fonts, and no runtime network requests.
+
+## Quick start
 
 Requires Node.js **22.18+** (Node 24 recommended) and a current browser with **WebGL 2 and hardware acceleration**.
 
 ```powershell
-Set-Location 'C:\Users\primaurya\OneDrive - Microsoft\Documents\projects\impossible-museum'
-.\start.ps1
-```
-
-Open **http://127.0.0.1:5175**. Stop the server with `Ctrl+C`. The Windows launcher uses the existing portable Copilot Node installation if Node is not on PATH and restores missing dependencies with `npm ci`.
-
-On Windows, development file watching uses polling to tolerate OneDrive file locks. Documentation images and browser artifacts are excluded from watching.
-
-Alternatively:
-
-```powershell
+git clone https://github.com/PoojaAgarwal2003/impossible-museum.git
+Set-Location impossible-museum
 npm ci
 npm run dev
 ```
+
+Open **http://127.0.0.1:5175**. Stop the server with `Ctrl+C`.
+
+On Windows, `.\start.ps1` starts the same development server and restores missing locked dependencies. Development file watching uses polling to tolerate OneDrive file locks.
 
 ## The collection
 
@@ -115,4 +138,4 @@ Browser checks use Microsoft Edge on Windows by default, or Playwright Chromium 
 - `src/escape-controller.ts`: proximity/ray-cast inspection, journal, inventory, puzzle forms, and the escape sequence.
 - `src/escape.css`: escape-specific interface styling; free exploration remains intact.
 
-No runtime external requests, accounts, analytics, API keys, or downloaded art assets. No remote repository or deployment is configured automatically.
+No runtime external requests, accounts, analytics, API keys, or downloaded art assets.
