@@ -15,6 +15,8 @@ Set-Location 'C:\Users\primaurya\OneDrive - Microsoft\Documents\projects\impossi
 
 Open **http://127.0.0.1:5175**. Stop the server with `Ctrl+C`. The Windows launcher uses the existing portable Copilot Node installation if Node is not on PATH and restores missing dependencies with `npm ci`.
 
+On Windows, development file watching uses polling to tolerate OneDrive file locks. Documentation images and browser artifacts are excluded from watching.
+
 Alternatively:
 
 ```powershell
